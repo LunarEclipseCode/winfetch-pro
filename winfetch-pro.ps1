@@ -227,7 +227,7 @@ $defaultConfig = @'
 # }
 
 # Configure how to show info for levels
-# Default is for text only.
+# 'textaltbar' is the default.
 # 'bar' is for bar only.
 # 'textbar' is for text + bar.
 # 'bartext' is for bar + text.
