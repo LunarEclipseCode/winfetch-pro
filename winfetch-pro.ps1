@@ -5,7 +5,7 @@
 # (!) This file must to be saved in UTF-8 with BOM encoding in order to work with legacy Powershell 5.x
 
 <#PSScriptInfo
-.VERSION 1.0.2
+.VERSION 1.0.3
 .GUID 6f7dd5d1-6db3-41e4-8328-ace6c30bf24f
 .AUTHOR @LunarEclipseCode, Winfetch contributers
 .PROJECTURI https://github.com/LunarEclipseCode/winfetch-pro
@@ -13,7 +13,7 @@
 .COPYRIGHT
 .TAGS neofetch screenfetch system-info commandline
 .LICENSEURI https://github.com/LunarEclipseCode/winfetch-pro/blob/master/LICENSE
-.ICONURI https://lptstr.github.io/lptstr-images/proj/winfetch/logo.png
+.ICONURI https://raw.githubusercontent.com/LunarEclipseCode/winfetch-pro/refs/heads/master/images/logo.png
 .EXTERNALMODULEDEPENDENCIES
 .REQUIREDSCRIPTS
 .EXTERNALSCRIPTDEPENDENCIES

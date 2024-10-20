@@ -4,8 +4,6 @@
 
 Winfetch-Pro is an enhanced version of [Winfetch](https://github.com/lptstr/winfetch), designed to provide more functionality and customization for displaying system information in Windows. 
 
-
-
 ![winfetch-demo.png](./images/winfetch-demo.png)
 
 ## Feature Overview
@@ -44,4 +42,4 @@ Winfetch-Pro adds a range of functions to display more detailed system informati
 - **Battery Health**
 - **Screen Refresh Rate**
 
-#### More: \[[Installation](https://github.com/lptstr/winfetch/wiki/Installation)\] \[[Configuration](https://github.com/lptstr/winfetch/wiki/Configuration)\] \[[Colors](https://github.com/lptstr/winfetch/wiki/ANSI-Colors)\]
+#### More: \[[Installation](https://github.com/LunarEclipseCode/winfetch-pro/wiki/Installation)\] \[[Configuration](https://github.com/LunarEclipseCode/winfetch-pro/wiki/Configuration)\] \[[Colors](https://github.com/LunarEclipseCode/winfetch-pro/wiki/ANSI-Colors)\]
