@@ -5,7 +5,7 @@
 # (!) This file must to be saved in UTF-8 with BOM encoding in order to work with legacy Powershell 5.x
 
 <#PSScriptInfo
-.VERSION 1.0.3
+.VERSION 1.0.5
 .GUID 6f7dd5d1-6db3-41e4-8328-ace6c30bf24f
 .AUTHOR @LunarEclipseCode, Winfetch contributers
 .PROJECTURI https://github.com/LunarEclipseCode/winfetch-pro
@@ -111,7 +111,7 @@ param(
     [switch][alias('s')]$stripansi,
     [switch][alias('a')]$all,
     [switch][alias('h')]$help,
-    [ValidateSet("text", "bar", "textbar", "bartext", "altbar", "textaltbar", "altbartext")][string]$cpustyle = "textaltbar",
+    [ValidateSet("text", "bar", "textbar", "bartext", "altbar", "textaltbar", "altbartext")][string]$cpustyle = "text",
     [ValidateSet("text", "bar", "textbar", "bartext", "altbar", "textaltbar", "altbartext")][string]$memorystyle = "textaltbar",
     [ValidateSet("text", "bar", "textbar", "bartext", "altbar", "textaltbar", "altbartext")][string]$diskstyle = "textaltbar",
     [ValidateSet("text", "bar", "textbar", "bartext", "altbar", "textaltbar", "altbartext")][string]$batterystyle = "textaltbar",
@@ -1804,7 +1804,7 @@ function info_cpu_usage {
 
     return @{
         Title   = "CPU Usage"
-        Content = Get-LevelInfo "" $cpuStyle $data.LoadPercent "$($data.ProcessCount) processes" -AltStyle
+        Content = get_level_info "" $cpuStyle $data.LoadPercent "$($data.ProcessCount) processes" -AltStyle
     }
 }
 
@@ -2971,7 +2971,7 @@ function ProcessHeaderItems {
         [array]$headerItems,
         [ref]$outputLines,
         [ref]$maxLength,
-        [hashtable]$colorMap = @{}
+        [hashtable]$colorMap
     )
 
     # Default color to apply to all elements
@@ -3500,6 +3500,7 @@ if ($($config_right_blank -and $not_contain_center) -and -not $bottom_gt_logo) {
 
     $colorKey = Get-AnsiCode -colorInput $colorLeftKey
     $colorValue = Get-AnsiCode -colorInput $colorLeftValue
+    Start-Sleep -Milliseconds 1
 
     for ($i = 0; $i -lt $header_output_lines.Count; $i++) {
         $output = $header_output_lines[$i]
@@ -3525,7 +3526,7 @@ if ($($config_right_blank -and $not_contain_center) -and -not $bottom_gt_logo) {
             }
         }
         else {
-            $output = truncate_line $output $($freeSpace)
+            $output = truncate_line $output $freeSpace
         }
         Write-Output $output
     }
@@ -3638,7 +3639,7 @@ if ($($config_right_blank -and $not_contain_center) -and -not $bottom_gt_logo) {
         AlignTextbarLines -TextbarLines $bufferedTextbarLines
         $bufferedTextbarLines = @()
     }
-
+    Start-Sleep -Milliseconds 1
 
     for ($i = 0; $i -lt $footer_output_lines.Count; $i++) {
         $output = $footer_output_lines[$i]
@@ -3685,13 +3686,6 @@ if ($($config_right_blank -and $not_contain_center) -and -not $bottom_gt_logo) {
 
     # move cursor back to the bottom and print 2 newlines
     if (-not $stripansi) {
-        $diff = $img.Length - $writtenLines
-        if ($img -and $diff -gt 0) {
-            Write-Output "$e[${diff}B"
-        }
-        else {
-            Write-Output ""
-        }
         Write-Output "$e[?25h"
     }
     else {
@@ -3922,7 +3916,7 @@ else {
         }
 
         $max_lines = [Math]::Max($img.Count + $bottom_output_lines.Count, $combinedLines.Count) 
-        Write-Host ""
+        Write-Output ""
     }
 
     else {
