@@ -135,8 +135,6 @@ param(
     [string][alias('cRV')]$colorRightValue = "white",
     [string][alias('cGK')]$colorGeneralKey = "red",
     [string][alias('cGV')]$colorGeneralValue = "cyan",
-
-    [array]$header = @(),
     [bool]$centerlogo = $true
 )
 
@@ -167,7 +165,7 @@ $defaultConfig = @'
 # $ascii = $true
 
 # Set the version of Windows to derive the logo from.
-# $logo = "Windows 10"
+$logo = "Windows 7"
 
 # Specify width for image/logo
 # $imgwidth = 24
@@ -269,7 +267,6 @@ $defaultConfig = @'
 $config_left = @(
     "blank"
     "user"
-    "os"
     "mini_os"
     "resolution"
     "mini_uptime"
@@ -297,7 +294,6 @@ $config_right = @(
     "mini_cache"
     "ram_frequency"
     "cpu_usage_only"
-    "blank"
     "blank"
     "blank"
     "blank"
@@ -437,72 +433,19 @@ if (-not (Test-Path $configPath) -or [String]::IsNullOrWhiteSpace((Get-Content $
     }
 }
 
+# Declare essential variables before loading config to avoid errors when the variable is not defined in config
+$config_right = @()
+$config_left = @()
+$config_bottom = @()
+$header = @()
+$headerColorMap= @{}
+$footer = @()
+$footerColorMap = @{}
 . $configPath *> $null
 
 # prevent config from overriding specified parameters
 foreach ($param in $PSBoundParameters.Keys) {
     Set-Variable $param $PSBoundParameters[$param]
-}
-
-$config = . $configPath
-# Set default left and right columns if config not set
-if (-not $config) {
-    $config_left = @(
-        "blank"
-        "user"
-        "mini_os"
-        "resolution"
-        "mini_uptime"
-        "cpu_name"
-        "cpu_cores"
-        "ram_total"
-        "ram_form_factor"
-        "blank"
-        "general_memory"
-        "general_disk"
-        "general_battery_health"
-        "blank"
-        "weather_condition"
-        "temp_celcius"
-        "sun"
-    )
-
-    $config_right = @(
-        "blank"
-        "hostname"
-        "kernel"
-        "refresh_rate"
-        "cpu_processes"
-        "cpu_clock_speed"
-        "mini_cache"
-        "ram_frequency"
-        "cpu_usage_only"
-        "blank"
-        "blank"
-        "blank"
-        "blank"
-        "blank"
-        "humidity"
-        "feels_like_celcius"
-        "wind"
-    )
-
-    $config_bottom = @(
-        "blank"
-        "colorbar_center"
-    )
-
-    $header = @(
-        @("emoji_date", "emoji_time", "emoji_battery"), @()
-    )
-
-    $headerColorMap = @{
-        'emoji_time'    = "yellow" 
-        'emoji_date'    = "red"
-        'emoji_battery' = "cyan"
-    }
-
-    $logo = "Windows 7"
 }
 
 if ($all) {
