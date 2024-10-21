@@ -5,7 +5,7 @@
 # (!) This file must to be saved in UTF-8 with BOM encoding in order to work with legacy Powershell 5.x
 
 <#PSScriptInfo
-.VERSION 1.0.5
+.VERSION 1.0.6
 .GUID 6f7dd5d1-6db3-41e4-8328-ace6c30bf24f
 .AUTHOR @LunarEclipseCode, Winfetch contributers
 .PROJECTURI https://github.com/LunarEclipseCode/winfetch-pro
@@ -514,6 +514,9 @@ function get_percent_bar {
     }
     elseif ($isRightColumn) {
         $defaultColor = Get-AnsiCode -colorInput $colorRightValue
+    }
+    elseif($isGeneralItem) {
+        $defaultColor = Get-AnsiCode -colorInput $colorGeneralValue
     }
     else {
         $defaultColor = Get-AnsiCode -colorInput $colorLeftValue
@@ -1028,7 +1031,11 @@ function info_bios {
     }
 
     $version = $biosInfo.SMBIOSBIOSVersion -join ", "
-    $firmwareVersion = if ($biosInfo.BiosVersion[0]) { $biosInfo.BiosVersion[0] } else { "Firmware N/A" }
+    $firmwareVersion = if ($biosInfo.BiosVersion[0]) {
+        $biosInfo.BiosVersion[0] -replace '\s+', ' ' 
+    } else {
+        "Firmware N/A"
+    }
 
     # Retrieve boot mode from environment variable
     $bootMode = $env:firmware_type
@@ -1432,19 +1439,24 @@ function info_display {
     Add-Type -AssemblyName System.Windows.Forms
     [System.Collections.ArrayList]$lines = @()
     
-    foreach ($monitor in [System.Windows.Forms.Screen]::AllScreens) {
+    $monitors = [System.Windows.Forms.Screen]::AllScreens
+    $monitorCount = $monitors.Count
+    
+    foreach ($monitor in $monitors) {
         $width = $monitor.Bounds.Size.Width
         $height = $monitor.Bounds.Size.Height
         
         $refreshRate = Get-CimInstance -ClassName Win32_VideoController -CimSession $cimSession | Select-Object -ExpandProperty CurrentRefreshRate
+        $title = if ($monitorCount -eq 1) { "Display" } else { "Display$($monitors.IndexOf($monitor) + 1)" }
 
         [void]$lines.Add(@{
-                title   = "Display"
-                content = "$($width)x$($height) @ $($refreshRate)Hz"
-            })
+            title   = $title
+            content = "$($width)x$($height) @ $($refreshRate)Hz"
+        })
     }
     return $lines
 }
+
 
 # ===== THEME =====
 function info_theme {
@@ -1519,11 +1531,17 @@ function info_cpu_cores {
 # ===== GPU =====
 function info_gpu {
     [System.Collections.ArrayList]$lines = @()
-    foreach ($gpu in Get-CimInstance -ClassName Win32_VideoController -Property Name -CimSession $cimSession) {
+    $gpus = Get-CimInstance -ClassName Win32_VideoController -Property Name -CimSession $cimSession
+
+    $gpuCount = $gpus.Count
+    for ($i = 0; $i -lt $gpuCount; $i++) {
+        $gpu = $gpus[$i]
+        $title = if ($gpuCount -eq 1) { "GPU" } else { "GPU$($i + 1)" }
+
         [void]$lines.Add(@{
-                title   = "GPU"
-                content = $gpu.Name
-            })
+            title   = $title
+            content = $gpu.Name
+        })
     }
     return $lines
 }
@@ -1994,7 +2012,7 @@ function info_battery {
         if (-not $batteryData) {
             return @{
                 title   = "Battery"
-                content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% (Charging)" -altstyle -reverse $true
+                content = get_level_info "" $batterystyle "$batteryLevel" "Charging" -altstyle -reverse $true
             }
         }
         
@@ -2007,7 +2025,7 @@ function info_battery {
         if (-not $chargingRate) {
             return @{
                 title   = "Battery"
-                content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% (Charging)" -altstyle -reverse $true
+                content = get_level_info "" $batterystyle "$batteryLevel" "Charging" -altstyle -reverse $true
             }
         }
 
@@ -2027,19 +2045,19 @@ function info_battery {
 
             return @{
                 title   = "Battery"
-                content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% ($timeToCharge)" -altstyle -reverse $true
+                content = get_level_info "" $batterystyle "$batteryLevel" "$timeToCharge" -altstyle -reverse $true
             }
         }
 
         return @{
             title   = "Battery"
-            content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% (Charging)" -altstyle -reverse $true
+            content = get_level_info "" $batterystyle "$batteryLevel" "Charging" -altstyle -reverse $true
         }
     }
     elseif ($battery.PowerLineStatus -like '*Online*') {
         return @{
             title   = "Battery"
-            content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% (Plugged In)" -altstyle -reverse $true
+            content = get_level_info "" $batterystyle "$batteryLevel" "Plugged In" -altstyle -reverse $true
         }
     }
     else {
@@ -2055,12 +2073,12 @@ function info_battery {
             }
             return @{
                 title   = "Battery"
-                content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% ($timeFormatted)" -altstyle -reverse $true
+                content = get_level_info "" $batterystyle "$batteryLevel" "$timeFormatted" -altstyle -reverse $true
             }
         }
         return @{
             title   = "Battery"
-            content = get_level_info "" $batterystyle "$batteryLevel" "$batteryLevel% (Discharging)" -altstyle -reverse $true
+            content = get_level_info "" $batterystyle "$batteryLevel" "Discharging" -altstyle -reverse $true
         }
     }
 }
@@ -2586,9 +2604,22 @@ function info_region {
 # Retrieve the primary language (first language configured)
 function info_language {
     $PrimaryLanguage = (Get-ItemProperty -Path "HKCU:Control Panel\International\User Profile").Languages[0]
+    $content = $($languageLookup[$PrimaryLanguage])
     return @{
         title   = "Language"
-        content = "$languageLookup[$PrimaryLanguage]"
+        content = "$content"
+    }
+}
+
+function info_mini_language {
+    $PrimaryLanguage = (Get-ItemProperty -Path "HKCU:Control Panel\International\User Profile").Languages[0]
+    $content = $($languageLookup[$PrimaryLanguage])
+    # Remove any part after and including the bracket to fit it in double column layout
+    $content = $content -replace "\s*\(.*\)", ""
+
+    return @{
+        title   = "Language"
+        content = "$content"
     }
 }
 
@@ -2615,8 +2646,6 @@ function info_weather {
         content = "$currentTempC - $weatherCondition (Feels Like: $feelsLikeTempC) $wind"
     }
 }
-
-
 
 function info_weather_condition {
     $weatherCondition = ($weatherInfoParts[7..($weatherInfoParts.Length - 1)] -join " ").Trim()
@@ -3124,6 +3153,7 @@ function ColorOutput {
     }
 }
 
+$isGeneralItem = $false
 function ProcessConfigItems {
     param (
         [array]$configItems,
@@ -3208,7 +3238,7 @@ function ProcessConfigItems {
 
         # Process each line in the info object
         foreach ($line in $info) {
-            if ($item -in @("colorbar_center", "colorbar", "gradient", "gradient_center")) {
+            if ($item -in @("colorbar_center", "gradient_center")) {
                 # Defer processing for colorbar items
                 $deferredItems += [PSCustomObject]@{
                     LineIndex       = $lineIndex
@@ -3335,7 +3365,7 @@ function check_non_blank {
     param (
         [string[]]$ConfigArray
     )
-    $elements = @('blank', 'colorbar', 'colorbar_center', 'gradient', 'gradient_bar_center')
+    $elements = @('blank', 'colorbar', 'colorbar_center', 'gradient', 'gradient_center')
     
     if ($stripansi) {
         foreach ($item in $ConfigArray) {
@@ -3439,7 +3469,7 @@ $bottom_gt_logo = $bottom_max_length -gt $logo_max_length
 # As a result, moving the cursor up by a relative number of lines will not return it to the top of the logo.
 # To manage this situation, we concatenate different sections and print all the information together at once.
 # Skip the printing process if stripansi is false because cursor movment not possible witout ANSI escape codes
-if ($(($config_bottom_not_blank -and -not $bottom_gt_logo ) -and ( $bottom_output_lines.Length -lt 6 ) -and -not $stripansi)) {
+if ($(($config_bottom_not_blank -and -not $bottom_gt_logo ) -and ( $bottom_output_lines.Length -lt 9 ) -and -not $stripansi)) {
     foreach ($line in $img) {
         Write-Output $line
     }
@@ -3484,7 +3514,7 @@ function AlignTextbarLines {
 }
 
 
-if ($($config_right_blank -and $not_contain_center) -and -not $bottom_gt_logo) {
+if ($($config_right_blank -and $not_contain_center) -and -not $bottom_gt_logo -and $bottom_output_lines.Length -lt 9) {
     $GAP = 3
     $writtenLines = 0
     $freeSpace = $Host.UI.RawUI.WindowSize.Width - 1
@@ -3734,6 +3764,24 @@ else {
 
     $combinedLines = @()
 
+    # Define the escape character
+    $e = [char]27
+
+    $colorbarPattern = "^\s{2,}(?:$e\[[0-9;]+m\s*)+"
+
+    if($cutoff -and -not $stripansi) {
+        foreach ($line in $bottom_output_lines) {
+            if ($line.Content -match $colorbarPattern) {
+                $bar_length = $($line.Content -replace $ansiRegex, "")
+                $line.Content = $($line.Content).TrimStart()
+                if($bar_length -lt $logo_max_length) {
+                    $line.Content = pad_line_center $line.Content $logo_max_length
+                }
+                $line.Content = " " + $line.Content
+            }
+        }
+    }
+
     # Center the logo if $centerlogo is true and image exists
     # If cutoff is true, the max length of bottom section is restricted by logo_max_length. 
     # In consequence, if cutoff is true, centering the logo is not necessary.
@@ -3899,7 +3947,7 @@ else {
 
     $combinedLines = $header_output_lines + $combinedLines + $footer_output_lines
 
-    if ($bottom_output_lines.Length -lt 6 -and $logo_max_length -ge $bottom_max_length -and -not $stripansi) {
+    if ($bottom_output_lines.Length -lt 9 -and $logo_max_length -ge $bottom_max_length -and -not $stripansi) {
         if ($img) {
             $bottomSectionLines = $bottom_output_lines.Count
             $logoHeight = $img.Length
@@ -3915,8 +3963,12 @@ else {
             $writtenLines++
         }
 
-        $max_lines = [Math]::Max($img.Count + $bottom_output_lines.Count, $combinedLines.Count) 
-        Write-Output ""
+        # $max_lines = [Math]::Max($img.Count + $bottom_output_lines.Count, $combinedLines.Count)
+        if($($img.Count + $bottom_output_lines.Count) -gt $combinedLines.Count) {
+            for ($i = 0; $i -lt ($bottom_output_lines.Count - 2); $i++) {
+                Write-Output ""
+            }
+        }
     }
 
     else {
